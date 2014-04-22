@@ -56,34 +56,69 @@ bool GameLayer::init()
 }
 
 void GameLayer::update(float dt) {
-//    Point ballNextPosition = _ball->getNextPosition();
-//    Point ballVector = _ball->getVector();
-//    ballVector = ballVector * 0.98f;
-//
-//    ballNextPosition.x += ballVector.x;
-//    ballNextPosition.y += ballVector.y;
-//
-//    // since we will not be using the sqrt function to find distance because
-//    // it is costly, then we have to square everything.
-//    float squared_radii = std::pow(_player1->radius() + _ball->radius(), 2);
-//    for (const auto& player : _players) {
-//        auto playerNextPosition = player->getNextPosition();
-//        auto playerVector = player->getVector();
-//
-//        auto distance1 =
-//            std::pow(ballNextPosition.x - player->getPositionX(), 2) +
-//            std::pow(ballNextPosition.y - player->getPositionY(), 2);
-//        
-//        auto distance2 =
-//            std::pow(_ball->getPositionX() - playerNextPosition.x, 2) +
-//            std::pow(_ball->getPositionY() - playerNextPosition.y, 2);
-//        
-//        if (distance1 <= squared_radii || distance2 <= squared_radii) {
-//            // houston we have a collision...
-//        }
-//    }
+    Point ballNextPosition = _ball->getNextPosition();
+    Point ballVector = _ball->getVector();
+    
+    ballVector = ballVector * 0.98f;
+    ballNextPosition.x += ballVector.x;
+    ballNextPosition.y += ballVector.y;
+
+    // since we will not be using the sqrt function to find distance because
+    // it is costly, then we have to square everything.
+    float squared_radii = std::pow(_player1->radius() + _ball->radius(), 2);
+    for (const auto& player : _players) {
+        auto playerNextPosition = player->getNextPosition();
+        auto playerVector = player->getVector();
+
+        auto diffx = ballNextPosition.x - player->getPositionX();
+        auto diffy = ballNextPosition.y - player->getPositionY();
+
+        auto distance1 = std::pow(diffx, 2) + std::pow(diffy, 2);
+        
+        auto distance2 =
+            std::pow(_ball->getPositionX() - playerNextPosition.x, 2) +
+            std::pow(_ball->getPositionY() - playerNextPosition.y, 2);
+        
+        if (distance1 <= squared_radii || distance2 <= squared_radii) {
+            auto mag_ball = pow(ballVector.x, 2) + pow(ballVector.y, 2);
+            auto mag_player = pow(playerVector.x, 2) + pow(playerVector.y, 2);
+            auto force = sqrt(mag_ball + mag_player);
+            auto angle = atan2(diffy, diffx);
+            
+            ballVector.x = force * cos(angle);
+            ballVector.y = force * sin(angle);
+            
+            ballNextPosition.x = playerNextPosition.x + (player->radius() + _ball->radius() + force) * cos(angle);
+            ballNextPosition.y = playerNextPosition.y + (player->radius() + _ball->radius() + force) + sin(angle);
+         }
+    }
+    
+    if (ballNextPosition.x < _ball->radius()) {
+        ballNextPosition.x = _ball->radius();
+        ballVector.x *= -0.8f;
+    }
+
+    if (ballNextPosition.x > _screenSize.width - _ball->radius()) {
+        ballNextPosition.x = _screenSize.width - _ball->radius();
+        ballVector.x *= -0.8f;
+    }
+
+    if (ballNextPosition.y < _ball->radius()) {
+        ballNextPosition.y = _ball->radius();
+        ballVector.y *= -0.8f;
+    }
+    
+    if (ballNextPosition.y > _screenSize.height - _ball->radius()) {
+        ballNextPosition.y = _screenSize.height - _ball->radius();
+        ballVector.y *= -0.8f;
+    }
+
+    _ball->setVector(ballVector);
+    _ball->setNextPosition(ballNextPosition);
+
     _player1->setPosition(_player1->getNextPosition());
     _player2->setPosition(_player2->getNextPosition());
+    _ball->setPosition(_ball->getNextPosition());
 }
 
 void GameLayer::onEnter() {
