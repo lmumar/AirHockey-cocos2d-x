@@ -171,18 +171,15 @@ void GameLayer::onTouchesMoved(const std::vector<cocos2d::Touch*>& touches, coco
                 }
                 
                 // keep player inside it's court
-                // NOTE: why do we only need to check player's y position is less
-                // than screen's height? How about when the player's y position is
-                // greater than the screen's height?
-//                if (p->getPositionY() < _screenSize.height * 0.5f) {
-//                    if (nextPosition.y > _screenSize.height * 0.5f - p->radius()) {
-//                        nextPosition.y = _screenSize.height * 0.5f - p->radius();
-//                    } else {
-//                        if (nextPosition.y < _screenSize.height + p->radius()) {
-//                            nextPosition.y = _screenSize.height + p->radius();
-//                        }
-//                    }
-//                }
+                if (p->getPositionY() < _screenSize.height * 0.5f) {
+                    if (nextPosition.y > _screenSize.height * 0.5f - p->radius()) {
+                        nextPosition.y = _screenSize.height * 0.5f - p->radius();
+                    }
+                } else {
+                    if (nextPosition.y < _screenSize.height * 0.5f + p->radius()) {
+                        nextPosition.y = _screenSize.height * 0.5f + p->radius();
+                    }
+                }
 
                 p->setNextPosition(nextPosition);
                 p->setVector(cocos2d::Point{
