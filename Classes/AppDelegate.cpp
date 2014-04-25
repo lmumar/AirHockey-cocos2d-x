@@ -1,7 +1,10 @@
 #include "AppDelegate.h"
 #include "GameLayer.h"
+#include "SimpleAudioEngine.h"
 
 USING_NS_CC;
+
+using namespace CocosDenshion;
 
 AppDelegate::AppDelegate() {
 
@@ -19,6 +22,13 @@ bool AppDelegate::applicationDidFinishLaunching() {
         glview = GLView::create("Air Hockey");
         director->setOpenGLView(glview);
     }
+
+    // initialize audio engine
+    auto hitwav = FileUtils::getInstance()->fullPathForFilename("hit.wav");
+    auto scorewav = FileUtils::getInstance()->fullPathForFilename("score.wav");
+    
+    SimpleAudioEngine::getInstance()->preloadEffect(hitwav.c_str());
+    SimpleAudioEngine::getInstance()->preloadEffect(scorewav.c_str());
 
     Size screenSize = glview->getFrameSize();
     if (screenSize.width > 768) {

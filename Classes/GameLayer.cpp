@@ -1,6 +1,9 @@
 #include "GameLayer.h"
+#include "SimpleAudioEngine.h"
 
 USING_NS_CC;
+
+using namespace CocosDenshion;
 
 Scene* GameLayer::createScene()
 {
@@ -65,7 +68,7 @@ void GameLayer::update(float dt) {
 
     // since we will not be using the sqrt function to find distance because
     // it is costly, then we have to square everything.
-    float squared_radii = std::pow(_player1->radius() + _ball->radius(), 2);
+    float squared_radii = pow(_player1->radius() + _ball->radius(), 2);
     for (const auto& player : _players) {
         auto playerNextPosition = player->getNextPosition();
         auto playerVector = player->getVector();
@@ -73,11 +76,11 @@ void GameLayer::update(float dt) {
         auto diffx = ballNextPosition.x - player->getPositionX();
         auto diffy = ballNextPosition.y - player->getPositionY();
 
-        auto distance1 = std::pow(diffx, 2) + std::pow(diffy, 2);
+        auto distance1 = pow(diffx, 2) + pow(diffy, 2);
         
         auto distance2 =
-            std::pow(_ball->getPositionX() - playerNextPosition.x, 2) +
-            std::pow(_ball->getPositionY() - playerNextPosition.y, 2);
+            pow(_ball->getPositionX() - playerNextPosition.x, 2) +
+            pow(_ball->getPositionY() - playerNextPosition.y, 2);
         
         if (distance1 <= squared_radii || distance2 <= squared_radii) {
             auto mag_ball = pow(ballVector.x, 2) + pow(ballVector.y, 2);
@@ -89,36 +92,89 @@ void GameLayer::update(float dt) {
             ballVector.y = force * sin(angle);
             
             ballNextPosition.x = playerNextPosition.x + (player->radius() + _ball->radius() + force) * cos(angle);
-            ballNextPosition.y = playerNextPosition.y + (player->radius() + _ball->radius() + force) + sin(angle);
+            ballNextPosition.y = playerNextPosition.y + (player->radius() + _ball->radius() + force) * sin(angle);
+
+            SimpleAudioEngine::getInstance()->playEffect("hit.wav");
          }
     }
     
     if (ballNextPosition.x < _ball->radius()) {
         ballNextPosition.x = _ball->radius();
         ballVector.x *= -0.8f;
+        SimpleAudioEngine::getInstance()->playEffect("hit.wav");
     }
 
     if (ballNextPosition.x > _screenSize.width - _ball->radius()) {
         ballNextPosition.x = _screenSize.width - _ball->radius();
         ballVector.x *= -0.8f;
+        SimpleAudioEngine::getInstance()->playEffect("hit.wav");
     }
 
     if (ballNextPosition.y < _ball->radius()) {
-        ballNextPosition.y = _ball->radius();
-        ballVector.y *= -0.8f;
+        if (_ball->getPositionX() < _screenSize.width * 0.5f - GOAL_WIDTH * 0.5f ||
+            _ball->getPositionX() > _screenSize.width * 0.5f + GOAL_WIDTH * 0.5f) {
+            ballNextPosition.y = _ball->radius();
+            ballVector.y *= -0.8f;
+            SimpleAudioEngine::getInstance()->playEffect("hit.wav");
+        }
     }
     
     if (ballNextPosition.y > _screenSize.height - _ball->radius()) {
-        ballNextPosition.y = _screenSize.height - _ball->radius();
-        ballVector.y *= -0.8f;
+        if (_ball->getPositionX() < _screenSize.width * 0.5f - GOAL_WIDTH * 0.5f ||
+            _ball->getPositionX() > _screenSize.width * 0.5f + GOAL_WIDTH * 0.5f) {
+            ballNextPosition.y = _screenSize.height - _ball->radius();
+            ballVector.y *= -0.8f;
+            SimpleAudioEngine::getInstance()->playEffect("hit.wav");
+        }
     }
 
     _ball->setVector(ballVector);
     _ball->setNextPosition(ballNextPosition);
 
+    // check for goal
+    if (ballNextPosition.y < -_ball->radius() * 2) {
+        playerScore(2);
+    }
+    
+    if (ballNextPosition.y > _screenSize.height + _ball->radius() * 2) {
+        playerScore(1);
+    }
+
     _player1->setPosition(_player1->getNextPosition());
     _player2->setPosition(_player2->getNextPosition());
     _ball->setPosition(_ball->getNextPosition());
+}
+
+void GameLayer::playerScore(int player) {
+    SimpleAudioEngine::getInstance()->playEffect("score.wav");
+    _ball->setVector(Point::ZERO);
+    
+    if (player == 1) {
+        _ball->setNextPosition(Point{
+            _screenSize.width * 0.5f,
+            _screenSize.height * 0.5f + _ball->radius() * 2
+        });
+    } else {
+        _ball->setNextPosition(Point{
+            _screenSize.width * 0.5f,
+            _screenSize.height * 0.5f - _ball->radius() * 2
+        });
+    }
+
+    // move players to there original position
+    _player1->setPosition(Point{
+        _screenSize.width * 0.5f,
+        _player1->radius() * 2
+    });
+
+    _player2->setPosition(Point{
+        _screenSize.width * 0.5f,
+        _screenSize.height - _player2->radius() * 2
+    });
+    
+    // clear touch information
+    _player1->setTouch(nullptr);
+    _player2->setTouch(nullptr);
 }
 
 void GameLayer::onEnter() {
