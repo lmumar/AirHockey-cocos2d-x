@@ -52,6 +52,23 @@ bool GameLayer::init()
     });
     addChild(_ball);
 
+    // add score labels
+    _player1ScoreLabel = LabelTTF::create("0", "Arial", 60);
+    _player1ScoreLabel->setPosition(Point{
+        _screenSize.width - 60,
+        _screenSize.height * 0.5 - 80
+    });
+    _player1ScoreLabel->setRotation(90);
+    addChild(_player1ScoreLabel);
+    
+    _player2ScoreLabel = LabelTTF::create("0", "Arial", 60);
+    _player2ScoreLabel->setPosition(Point{
+        _screenSize.width - 60,
+        _screenSize.height * 0.5 + 80
+    });
+    _player2ScoreLabel->setRotation(90);
+    addChild(_player2ScoreLabel);
+
     // create the main loop!
     schedule(schedule_selector(GameLayer::update));
 
@@ -149,12 +166,20 @@ void GameLayer::playerScore(int player) {
     SimpleAudioEngine::getInstance()->playEffect("score.wav");
     _ball->setVector(Point::ZERO);
     
+    char buffer[10];
+    
     if (player == 1) {
+        _player1Score++;
+        sprintf(buffer, "%i", _player1Score);
+        _player1ScoreLabel->setString(buffer);
         _ball->setNextPosition(Point{
             _screenSize.width * 0.5f,
             _screenSize.height * 0.5f + _ball->radius() * 2
         });
     } else {
+        _player2Score++;
+        sprintf(buffer, "%i", _player2Score);
+        _player2ScoreLabel->setString(buffer);
         _ball->setNextPosition(Point{
             _screenSize.width * 0.5f,
             _screenSize.height * 0.5f - _ball->radius() * 2
